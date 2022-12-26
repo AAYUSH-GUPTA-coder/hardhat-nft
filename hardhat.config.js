@@ -17,57 +17,48 @@ module.exports = {
     networks: {
         hardhat: {
             chainId: 31337,
-            forking: {
-                url: MAINNET_RPC_URL,
-            },
-            blockConfirmation: 1,
+            // gasPrice: 130000000000,
         },
         goerli: {
-            chainId: 5,
-            blockConfirmation: 6,
             url: GOERLI_RPC_URL,
             accounts: [GOERLI_PRIVATE_KEY],
+            chainId: 5,
+            blockConfirmations: 6,
+        },
+        mainnet: {
+            url: MAINNET_RPC_URL,
+            accounts: [GOERLI_PRIVATE_KEY],
+            chainId: 1,
+            blockConfirmations: 6,
         },
     },
+    solidity: {
+        compilers: [
+            {
+                version: "0.8.8",
+            },
+            {
+                version: "0.6.6",
+            },
+        ],
+    },
     etherscan: {
-        apiKey: {
-            goerli: ETHERSCAN_API_KEY,
-        },
+        apiKey: ETHERSCAN_API_KEY,
     },
     gasReporter: {
         enabled: true,
         currency: "USD",
         outputFile: "gas-report.txt",
         noColors: true,
-        coinmarketcap: COINMARKETCAP_API_KEY,
-    },
-    solidity: {
-        compilers: [
-            {
-                version: "0.8.7",
-            },
-            {
-                version: "0.6.6",
-            },
-            {
-                version: "0.6.12",
-            },
-            {
-                version: "0.4.19",
-            },
-        ],
+        // coinmarketcap: COINMARKETCAP_API_KEY,
     },
     namedAccounts: {
         deployer: {
-            default: 0,
-        },
-        player: {
-            default: 1,
+            default: 0, // here this will by default take the first account as deployer
+            1: 0, // similarly on mainnet it will take the first account as deployer. Note though that depending on how hardhat network are configured, the account 0 on one network can be different than on another
         },
     },
     mocha: {
-        timeout: {
-            timeout: 2000000, // 200 seconds
-        },
+        timeout: 200000, // 200 seconds max for running tests
     },
 }
