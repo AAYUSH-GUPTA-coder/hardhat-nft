@@ -10,7 +10,7 @@ error RandomIpfsNft__RangeOutOfBounds();
 error RandomIpfsNft__NeedMoreEthSent();
 error RandomIpfsNft__TransferFailed();
 
-contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage("Random IPFS NFT", "RIN") {
+contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage, Ownable {
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     uint64 private immutable i_subscriptionId;
     bytes32 private immutable i_gasLane;
@@ -33,6 +33,10 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage("Random IPFS NFT",
     string[] internal s_dogTokenUris;
     uint256 internal i_mintFee;
 
+    //Events
+    event NftRequested(uint256 indexed requestId, address requester);
+    event NftMinted(Breed dogBreed, address minter);
+
     constructor(
         address VRFCoordinatorV2,
         uint64 subscriptionId,
@@ -50,8 +54,8 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage("Random IPFS NFT",
     }
 
     function requestNft() public payable returns (uint256 requestId) {
-        if(msg.value < i_mintFee){
-            revert NeedMoreEthSent();
+        if (msg.value < i_mintFee) {
+            revert RandomIpfsNft__NeedMoreEthSent();
         }
         requestId = i_vrfCoordinator.requestRandomWords(
             i_gasLane,
@@ -61,6 +65,7 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage("Random IPFS NFT",
             NUM_WORDS
         );
         s_requestIdToSender[requestId] = msg.sender;
+        emit NftRequested(requestId, msg.sender);
     }
 
     function fulfillRandomWords(uint requestId, uint256[] memory randomWords) internal override {
@@ -75,13 +80,13 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage("Random IPFS NFT",
         Breed dogBreed = getBreedFromModdedRng(moddedRng);
         _safeMint(dogOwner, newTokenId);
         _setTokenURI(newTokenId, s_dogTokenUris[uint256(dogBreed)]);
+        emit NftMinted(dogBreed, dogOwner);
     }
-
 
     function withdraw() public onlyOwner {
         uint256 amount = address(this).balance;
         (bool success, ) = payable(msg.sender).call{value: amount}("");
-        if(!success){
+        if (!success) {
             revert RandomIpfsNft__TransferFailed();
         }
     }
@@ -102,9 +107,15 @@ contract RandomIpfsNft is VRFConsumerBaseV2, ERC721URIStorage("Random IPFS NFT",
         return [10, 30, MAX_CHANCE_VALUE];
     }
 
-    function getMintFee() public view returns(uint256){
+    function getMintFee() public view returns (uint256) {
         return i_mintFee;
     }
 
-    function getDogTokenUris(uint256 index) public view returns
+    function getDogTokenUris(uint256 index) public view returns (string memory) {
+        return s_dogTokenUris[index];
+    }
+
+    function getTokenCounter() public view returns (uint256) {
+        return s_tokenCounter;
+    }
 }
