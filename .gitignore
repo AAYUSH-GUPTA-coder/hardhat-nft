@@ -9,7 +9,7 @@ deployments
 node_modules
 coverage
 coverage.json
-
+gas-report.txt
 # don't push the environment vars!
 .env
 
